@@ -1,0 +1,51 @@
+```{r}
+library(tidyverse)
+library(terra)
+library(here)
+library(rgdal)
+library(RSQLite)
+library(sf)
+library(sp)
+library(dplyr)
+library(maptools)
+library(classInt)
+library(tmap)
+library(geojsonio)
+library(RColorBrewer)
+library(rgeos)
+library(downloader)
+```
+```{r}
+index <- read_csv(here::here("Index_timelapse.csv"))
+gii <- index %>%
+  dplyr::select(contains("country"),contains("gii"))%>%
+  na.omit()
+gii_diff <- gii %>%
+  mutate(Index_Diff201019 = (gii_2019 - gii_2010))
+gii_diff_compare <- gii_diff %>%
+  dplyr::select(country,
+                Index_Diff201019)
+```
+
+
+```{r}
+global_index <- st_read(here::here("World_Countries_Generalized.shp"))
+global_index_edit <- global_index %>%
+  dplyr::select(COUNTRY,
+                ISO,
+                SHAPE_Leng,
+                SHAPE_Area,
+                geometry)
+qtm(global_index_edit)
+
+global_index_plot <- global_index_edit %>%
+  left_join(.,
+            gii_diff_compare,
+            by = c("COUNTRY" = "country")) %>%
+  na.omit
+
+tmap_mode("plot")
+qtm(global_index_plot,
+    fill = "Index_Diff201019")
+```
+
